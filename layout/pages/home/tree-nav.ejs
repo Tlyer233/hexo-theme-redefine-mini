@@ -1,0 +1,426 @@
+<div class="tree-nav">
+    <%
+    // 获取所有文章并按分类组织
+    const allPosts = site.posts.sort('date', -1);
+    const categoryTree = {};
+    
+    // 获取当前文章（如果在文章页面）
+    const currentPostPath = typeof currentPost !== 'undefined' && currentPost ? currentPost.path : (typeof page !== 'undefined' && page.path ? page.path : null);
+    let currentMainCat = null;
+    let currentSubCat = null;
+    
+    allPosts.forEach(post => {
+        if (post.categories && post.categories.length > 0) {
+            const cats = post.categories.toArray();
+            if (cats.length >= 1) {
+                const mainCat = cats[0].name;
+                if (!categoryTree[mainCat]) {
+                    categoryTree[mainCat] = { subCats: {}, posts: [] };
+                }
+                
+                // 检查是否是当前文章，记录其分类
+                if (currentPostPath && post.path === currentPostPath) {
+                    currentMainCat = mainCat;
+                    if (cats.length >= 2) {
+                        currentSubCat = cats[1].name;
+                    }
+                }
+                
+                if (cats.length >= 2) {
+                    const subCat = cats[1].name;
+                    if (!categoryTree[mainCat].subCats[subCat]) {
+                        categoryTree[mainCat].subCats[subCat] = [];
+                    }
+                    categoryTree[mainCat].subCats[subCat].push(post);
+                } else {
+                    categoryTree[mainCat].posts.push(post);
+                }
+            }
+        }
+    });
+    
+    // 自然排序函数：正确处理数字（1, 2, 10 而不是 1, 10, 2）
+    const naturalSort = (a, b) => {
+        return a.localeCompare(b, 'zh-CN', { numeric: true, sensitivity: 'base' });
+    };
+    
+    // 对分类进行自然排序
+    const sortedMainCats = Object.keys(categoryTree).sort(naturalSort);
+    
+    // 定义分类图标
+    const catIcons = {
+        '🐍爬虫工程师': 'fa-solid fa-snake',
+        '😼Java全栈工程师': 'fa-brands fa-java',
+        '🏫考研': 'fa-solid fa-graduation-cap',
+        '🔬实战项目': 'fa-solid fa-flask'
+    };
+    
+    // 排序函数：按标题自然排序
+    const sortByTitle = (a, b) => naturalSort(a.title, b.title);
+    %>
+    
+    <% for (let mainCat of sortedMainCats) { 
+        const isCurrentMainCat = currentMainCat === mainCat;
+    %>
+        <div class="nav-group <%= isCurrentMainCat ? 'open' : '' %>">
+            <div class="nav-folder" onclick="toggleFolder(this)">
+                <i class="<%= catIcons[mainCat] || 'fa-solid fa-folder' %> folder-icon"></i>
+                <i class="fa-solid fa-chevron-right toggle-icon"></i>
+                <span class="folder-name"><%= mainCat %></span>
+            </div>
+            <div class="nav-items <%= isCurrentMainCat ? 'open' : '' %>">
+                <% 
+                const subCats = categoryTree[mainCat].subCats;
+                const directPosts = categoryTree[mainCat].posts;
+                
+                // 对子分类进行自然排序
+                const sortedSubCats = Object.keys(subCats).sort(naturalSort);
+                
+                for (let subCat of sortedSubCats) { 
+                    const isCurrentSubCat = currentSubCat === subCat && isCurrentMainCat;
+                %>
+                    <div class="nav-subfolder <%= isCurrentSubCat ? 'open' : '' %>" onclick="toggleSubfolder(this)">
+                        <i class="fa-solid fa-folder-open subfolder-icon"></i>
+                        <i class="fa-solid fa-chevron-right toggle-icon"></i>
+                        <span class="subfolder-name"><%= subCat %></span>
+                    </div>
+                    <div class="nav-subitems <%= isCurrentSubCat ? 'open' : '' %>">
+                        <% 
+                        // 对子分类下的文章按标题自然排序
+                        const sortedSubPosts = subCats[subCat].sort(sortByTitle);
+                        sortedSubPosts.forEach(post => { 
+                            const isCurrentArticle = currentPostPath && post.path === currentPostPath;
+                        %>
+                            <a class="nav-article <%= isCurrentArticle ? 'current-article' : '' %>" href="<%- url_for(post.path) %>" <% if (isCurrentArticle) { %>data-current="true"<% } %>>
+                                <i class="fa-regular fa-file-lines"></i>
+                                <span><%= post.title %></span>
+                            </a>
+                        <% }); %>
+                    </div>
+                <% } %>
+                
+                <% 
+                // 对直接文章按标题自然排序
+                const sortedDirectPosts = directPosts.sort(sortByTitle);
+                sortedDirectPosts.forEach(post => { 
+                    const isCurrentArticle = currentPostPath && post.path === currentPostPath;
+                %>
+                    <a class="nav-article direct-article <%= isCurrentArticle ? 'current-article' : '' %>" href="<%- url_for(post.path) %>" <% if (isCurrentArticle) { %>data-current="true"<% } %>>
+                        <i class="fa-regular fa-file-lines"></i>
+                        <span><%= post.title %></span>
+                    </a>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<style>
+/* 树状导航容器 - 独立滚动，高度与文章列表一致 */
+.tree-nav {
+    margin-top: 10px;
+    padding-right: 5px;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--tree-nav-scrollbar-thumb) transparent;
+}
+
+/* 当侧边栏是sticky时，设置最大高度 */
+.sticky .tree-nav {
+    max-height: calc(100vh - 300px);
+}
+
+/* 亮色模式滚动条 */
+:root {
+    --tree-nav-scrollbar-thumb: rgba(180, 180, 180, 0.5);
+    --tree-nav-scrollbar-thumb-hover: rgba(150, 150, 150, 0.7);
+}
+
+/* 暗色模式滚动条 */
+[data-theme="dark"] {
+    --tree-nav-scrollbar-thumb: rgba(80, 80, 80, 0.5);
+    --tree-nav-scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
+}
+
+.tree-nav::-webkit-scrollbar {
+    width: 5px;
+}
+
+.tree-nav::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.tree-nav::-webkit-scrollbar-thumb {
+    background: var(--tree-nav-scrollbar-thumb);
+    border-radius: 3px;
+}
+
+.tree-nav::-webkit-scrollbar-thumb:hover {
+    background: var(--tree-nav-scrollbar-thumb-hover);
+}
+
+/* 侧边栏容器样式调整 */
+.home-sidebar-container .sidebar-links,
+.post-sidebar-container .sidebar-links {
+    overflow: visible !important;
+    max-height: none !important;
+}
+
+/* 文章页面侧边栏样式 */
+.post-sidebar-container {
+    width: 280px;
+    height: auto;
+    margin: 0 15px;
+    flex-shrink: 0;
+}
+
+.post-sidebar-container .sticky-container {
+    position: sticky;
+    top: 80px;
+}
+
+.post-sidebar-container .sidebar-links {
+    background-color: var(--background-color);
+    border-radius: 14px;
+    box-shadow: var(--redefine-box-shadow-flat);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+}
+
+.post-sidebar-container .site-info {
+    background-color: var(--second-background-color);
+    margin: -15px -15px 10px -15px;
+    border-radius: 14px 14px 0 0;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.post-sidebar-container .site-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--second-text-color);
+    text-align: center;
+}
+
+.post-sidebar-container .announcement {
+    font-size: 0.85rem;
+    color: var(--third-text-color);
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* 文章页面侧边栏的树状导航高度 */
+.post-sidebar-container .tree-nav {
+    max-height: calc(100vh - 250px);
+}
+
+.nav-group {
+    margin-bottom: 8px;
+}
+
+.nav-folder, .nav-subfolder {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.nav-folder:hover, .nav-subfolder:hover {
+    background-color: rgba(var(--redefine-theme-primary-color-rgb), 0.1);
+}
+
+.nav-folder {
+    background-color: rgba(var(--redefine-theme-primary-color-rgb), 0.05);
+    margin-bottom: 5px;
+}
+
+.nav-subfolder {
+    margin-left: 20px;
+    background-color: rgba(var(--redefine-theme-primary-color-rgb), 0.03);
+    margin-bottom: 3px;
+}
+
+.folder-icon, .subfolder-icon {
+    margin-right: 8px;
+    width: 16px;
+    color: var(--redefine-theme-primary-color);
+}
+
+.toggle-icon {
+    margin-right: 6px;
+    width: 12px;
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    color: #666;
+}
+
+.folder-name, .subfolder-name {
+    flex: 1;
+    color: var(--redefine-theme-primary-color);
+}
+
+.nav-items, .nav-subitems {
+    display: none;
+    overflow: hidden;
+}
+
+.nav-items.open, .nav-subitems.open {
+    display: block;
+}
+
+.nav-article {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    margin-left: 40px;
+    text-decoration: none;
+    color: var(--redefine-text-color);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    border-left: 2px solid transparent;
+}
+
+.nav-article.direct-article {
+    margin-left: 20px;
+}
+
+.nav-article:hover {
+    background-color: rgba(var(--redefine-theme-primary-color-rgb), 0.08);
+    border-left-color: var(--redefine-theme-primary-color);
+    transform: translateX(3px);
+    color: var(--redefine-theme-primary-color);
+}
+
+/* 当前文章高亮样式 */
+.nav-article.current-article {
+    background-color: rgba(220, 53, 69, 0.12);
+    border-left-color: #dc3545;
+    color: #dc3545;
+    font-weight: 600;
+    position: relative;
+}
+
+.nav-article.current-article::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #dc3545, #ff6b6b);
+    border-radius: 2px;
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.nav-article.current-article i {
+    color: #dc3545;
+}
+
+/* 暗色模式下的当前文章样式 */
+[data-theme="dark"] .nav-article.current-article {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+}
+
+[data-theme="dark"] .nav-article.current-article i {
+    color: #ff6b6b;
+}
+
+.nav-article i {
+    margin-right: 8px;
+    width: 14px;
+    font-size: 12px;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.nav-article:hover i {
+    color: var(--redefine-theme-primary-color);
+}
+
+.nav-article span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-group.open > .nav-folder > .toggle-icon {
+    transform: rotate(90deg);
+}
+
+.nav-subfolder.open .toggle-icon {
+    transform: rotate(90deg);
+}
+
+/* 覆盖侧边栏原有样式，让sidebar-links可以展示完整内容 */
+.sidebar-links {
+    overflow: visible !important;
+}
+</style>
+
+<script>
+function toggleFolder(element) {
+    const navItems = element.nextElementSibling;
+    const navGroup = element.parentElement;
+    
+    if (navItems.classList.contains('open')) {
+        navItems.classList.remove('open');
+        navGroup.classList.remove('open');
+    } else {
+        navItems.classList.add('open');
+        navGroup.classList.add('open');
+    }
+}
+
+function toggleSubfolder(element) {
+    const navSubitems = element.nextElementSibling;
+    
+    if (navSubitems.classList.contains('open')) {
+        navSubitems.classList.remove('open');
+        element.classList.remove('open');
+    } else {
+        navSubitems.classList.add('open');
+        element.classList.add('open');
+    }
+}
+
+// 页面加载时处理目录状态
+document.addEventListener('DOMContentLoaded', function() {
+    const currentArticle = document.querySelector('.nav-article.current-article');
+    
+    if (currentArticle) {
+        // 如果有当前文章，滚动到该位置
+        setTimeout(() => {
+            const treeNav = document.querySelector('.tree-nav');
+            if (treeNav && currentArticle) {
+                const articleRect = currentArticle.getBoundingClientRect();
+                const navRect = treeNav.getBoundingClientRect();
+                const scrollTop = currentArticle.offsetTop - treeNav.offsetTop - (navRect.height / 2) + (articleRect.height / 2);
+                treeNav.scrollTo({
+                    top: Math.max(0, scrollTop),
+                    behavior: 'smooth'
+                });
+            }
+        }, 300);
+    } else {
+        // 如果没有当前文章（首页），展开第一个分组
+        const firstFolder = document.querySelector('.nav-folder');
+        if (firstFolder && !document.querySelector('.nav-group.open')) {
+            toggleFolder(firstFolder);
+        }
+    }
+});
+</script>

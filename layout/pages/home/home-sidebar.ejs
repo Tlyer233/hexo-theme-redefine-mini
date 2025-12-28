@@ -1,0 +1,60 @@
+<div class="home-sidebar-container">
+    <div class="sticky-container sticky">
+        <%
+            const hasSidebarLinks = theme.home.sidebar.links !== null;
+            const hasSidebarAnnouncement = theme.home.sidebar.announcement !== null;
+        %>
+        <% if (theme.home.sidebar.first_item === "info") { %>
+            <div class="sidebar-content">
+                <%- partial("components/sidebar/avatar") %>
+                <%- partial("components/sidebar/author") %>
+                <%- partial('components/sidebar/statistics')%>
+            </div>
+            <% if (hasSidebarLinks || hasSidebarAnnouncement) {%>
+                <div class="sidebar-links"  <% if (hasSidebarLinks || hasSidebarAnnouncement) { %> marginTop <% } %>>
+                    <div class="site-info">
+                        <a href="<%= config.root %>" class="site-name" style="text-align: center; display: block;"><%= theme.info.title || config.title %></a>
+                        <% if (hasSidebarAnnouncement && hasSidebarLinks) { %>
+                            <div class="announcement">
+                                <%- theme.home.sidebar.announcement %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <% if (hasSidebarLinks) {%>
+                        <%- partial('pages/home/tree-nav') %>
+                    <% } else {%>
+                        <div class="announcement-outside">
+                            <%- theme.home.sidebar.announcement %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+        <% } else { %>
+            <% if (hasSidebarLinks || hasSidebarAnnouncement) {%>
+                <div class="sidebar-links">
+                    <div class="site-info">
+                        <a href="<%= config.root %>" class="site-name" style="text-align: center; display: block;"><%= theme.info.title || config.title %></a>
+                        <% if (hasSidebarAnnouncement && hasSidebarLinks) { %>
+                            <div class="announcement">
+                                <%- theme.home.sidebar.announcement %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <% if (hasSidebarLinks) {%>
+                        <%- partial('pages/home/tree-nav') %>
+                    <% } else {%>
+                        <div class="announcement-outside">
+                            <%- theme.home.sidebar.announcement %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+            <div class="sidebar-content" <% if (hasSidebarLinks || hasSidebarAnnouncement) { %> marginTop <% } %>>
+                <%- partial("components/sidebar/avatar") %>
+                <%- partial("components/sidebar/author") %>
+                <%- partial('components/sidebar/statistics')%>
+            </div>
+        <% } %>
+
+    </div>
+</div>

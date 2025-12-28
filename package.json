@@ -1,0 +1,39 @@
+{
+  "name": "hexo-theme-redefine-mini",
+  "version": "1.0.0",
+  "private": false,
+  "description": "A minimalist Hexo theme based on hexo-theme-redefine with enhanced features.",
+  "scripts": {
+    "npm:publish": "npm run build && npm publish",
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "tailwindcss build -i source/css/tailwind.source.css -o source/css/build/tailwind.css --minify",
+    "build:js": "node source/js/build.js",
+    "watch:css": "tailwindcss build -i source/css/tailwind.source.css -o source/css/build/tailwind.css --watch --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tlyer233/hexo-theme-redefine-mini.git"
+  },
+  "keywords": [
+    "hexo",
+    "theme",
+    "redefine",
+    "redefine-mini",
+    "minimalist",
+    "blog",
+    "hexo-theme"
+  ],
+  "author": "Tlyer233",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Tlyer233/hexo-theme-redefine-mini/issues"
+  },
+  "homepage": "https://github.com/Tlyer233/hexo-theme-redefine-mini",
+  "devDependencies": {
+    "eslint": "^8.47.0",
+    "glob-promise": "^6.0.7",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "terser": "^5.36.0"
+  }
+}

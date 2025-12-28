@@ -1,0 +1,16 @@
+<div class="post-sidebar-container">
+    <div class="sticky-container sticky">
+        <div class="sidebar-links">
+            <div class="site-info">
+                <a href="<%= config.root %>" class="site-name" style="text-align: center; display: block;"><%= theme.info.title || config.title %></a>
+                <div class="announcement" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span>文章目录</span>
+                    <% if (theme.navbar.search.enable === true) { %>
+                    <i class="fa-solid fa-magnifying-glass search-popup-trigger" style="cursor: pointer; font-size: 14px;"></i>
+                    <% } %>
+                </div>
+            </div>
+            <%- partial('pages/home/tree-nav', { currentPost: page }) %>
+        </div>
+    </div>
+</div>
